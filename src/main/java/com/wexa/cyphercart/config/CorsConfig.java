@@ -12,11 +12,15 @@ public class CorsConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                
                 registry.addMapping("/api/**")
-                        .allowedOrigins("http://localhost:5173", "http://localhost:3000")
+                        .allowedOrigins(
+                            "http://localhost:5173", 
+                            "http://localhost:3000", 
+                            "https://cyphercart-frontend.vercel.app" // Added your Vercel frontend URL
+                        )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*");
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
             }
         };
     }
