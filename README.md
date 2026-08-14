@@ -1,12 +1,3 @@
-Here is the complete, comprehensive backend `README.md` file designed specifically for your Wexa AI take-home assignment. It covers everything the reviewers look for (architecture, graph database rationale, data model, queries, and setup).
-
----
-
-### Backend README (`cyphercart-backend/README.md`)
-
-Create or update the `README.md` file in your `cyphercart-backend` repository with this content:
-
-```markdown
 # CypherCart Backend
 
 Backend service for **CypherCart**, an e-commerce catalog and recommendation engine built with **Spring Boot** and backed by **CognoDB** (managed graph database using openCypher over the Bolt protocol).
@@ -14,11 +5,13 @@ Backend service for **CypherCart**, an e-commerce catalog and recommendation eng
 ---
 
 ## 🚀 Why a Graph Database?
-Traditional relational databases (SQL) rely on foreign keys and expensive `JOIN` operations to compute multi-hop relationships, such as finding collaborative filtering recommendations (*"users who bought product X also purchased product Y"*). As product catalogs and user interaction graphs grow, relational models suffer from performance degradation and rigid schema constraints.
+
+Traditional relational databases rely on foreign keys and expensive `JOIN` operations for multi-hop recommendations such as *"users who bought X also bought Y"*.
 
 **CognoDB / Graph Model Benefits:**
-* **Native Index-Free Adjacency:** Graph databases traverse relationships directly in memory without costly table lookups, making multi-hop recommendation queries execute in milliseconds.
-* **Flexible Schema:** Easily model complex, interconnected domains involving `User`, `Product`, `Category`, and `Order` nodes with typed, directional relationships.
+
+* **Fast Relationship Traversal:** Directly traverses connected nodes for multi-hop recommendations.
+* **Flexible Schema:** Easily models `User`, `Product`, `Category`, and purchase/view relationships.
 
 ---
 
@@ -26,89 +19,72 @@ Traditional relational databases (SQL) rely on foreign keys and expensive `JOIN`
 
 ```text
 (User) --[PURCHASED]-> (Product) --[BELONGS_TO]-> (Category)
-   \                                                 /
-    `--------------[VIEWED]-------------------------'
-
+   |
+   `--[VIEWED]-------> (Product)
 ```
 
 * **Nodes:**
-* `User`: Represents platform customers (e.g., Alice).
-* `Product`: E-commerce catalog items (gadgets, electronics).
-* `Category`: Grouping classifications (Mice, Soundbars, Keyboards).
 
+  * `User`: Platform customers.
+  * `Product`: E-commerce products.
+  * `Category`: Product classifications.
 
 * **Relationships:**
-* `PURCHASED`: Connects users to items they have bought.
-* `BELONGS_TO`: Connects products to their respective categories.
-* `VIEWED`: Captures user browsing history for real-time recommendations.
 
-
+  * `PURCHASED`: User purchased a product.
+  * `BELONGS_TO`: Product belongs to a category.
+  * `VIEWED`: User viewed a product.
 
 ---
 
 ## 🛠️ Technology Stack
 
 * **Java 21** & **Spring Boot**
-* **Spring Data Neo4j** (Official Bolt protocol driver)
-* **CognoDB Cloud** (Managed graph database instance speaking openCypher)
+* **Spring Data Neo4j**
+* **CognoDB Cloud** (openCypher over Bolt)
 
 ---
 
 ## ⚙️ Setup and Configuration
 
 1. **Clone the repository:**
-```bash
-git clone [https://github.com/AdityaTalwatkar/cyphercart-backend.git](https://github.com/AdityaTalwatkar/cyphercart-backend.git)
-cd cyphercart-backend
 
+```bash
+git clone https://github.com/AdityaTalwatkar/cyphercart-backend.git
+cd cyphercart-backend
 ```
 
-
 2. **Configure CognoDB Credentials:**
-Open `src/main/resources/application.properties` and add your CognoDB instance connection details:
+
+Open `src/main/resources/application.properties`:
+
 ```properties
 spring.neo4j.uri=bolt+s://<your-instance-id>.databases.cognodb.cloud
 spring.neo4j.authentication.username=cognodb
 spring.neo4j.authentication.password=<your-generated-password>
-
 ```
-
 
 3. **Run the Application:**
+
 ```bash
 ./mvnw spring-boot:run
-
 ```
 
+## 🔍 Main Cypher Queries
 
-
----
-
-## 🔍 Main Cypher Queries Explained
-
-### 1. Multi-Hop Graph Recommendation Query
-
-This query traverses the graph to find products bought by other users who share similar purchase history with the target user (collaborative filtering):
+### 1. Multi-Hop Recommendation
 
 ```cypher
 MATCH (u:User {id: $userId})-[:PURCHASED]->(p:Product)<-[:PURCHASED]-(other:User)-[:PURCHASED]->(rec:Product)
-WHERE NOT (u-[:PURCHASED]->rec)
-RETURN DISTINCT rec, count(rec) as score
+WHERE NOT (u)-[:PURCHASED]->(rec)
+RETURN DISTINCT rec, count(rec) AS score
 ORDER BY score DESC
 LIMIT 5
-
 ```
 
-### 2. Catalog Inventory Retrieval
-
-Fetches all products mapped dynamically from the graph store:
+### 2. Catalog Retrieval
 
 ```cypher
 MATCH (p:Product)
 RETURN p
-
-```
-
-```
-
 ```
